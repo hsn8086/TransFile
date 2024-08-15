@@ -27,7 +27,7 @@ import uuid
 from datetime import datetime
 from pathlib import Path
 
-import ffmpeg
+import pywebio
 from pywebio import pin
 from pywebio.output import put_markdown, put_buttons, put_text, use_scope, put_row, put_button, \
     remove, put_scope, toast
@@ -44,7 +44,7 @@ class VideoConversion(PageTemplet):
         self.creating_task = False
 
     def _on_unload(self):
-        pass
+        self.creating_task = False
 
     def _on_register(self):
         pass
@@ -96,7 +96,10 @@ class VideoConversion(PageTemplet):
                         options['b:v'] = middleware['input']
                 print(options)
 
-                tm.create_task(VideoConvertTask(input_file.as_posix(), (p/f"{uuid.uuid4().hex}.mp4").as_posix(), **options))
+                tm.create_task(
+                    VideoConvertTask(input_file.as_posix(), (p / f"{uuid.uuid4().hex}.mp4").as_posix(), **options),
+                    label=pywebio.session.info.user_ip + pywebio.session.info.user_agent.ua_string
+                )
                 # download the video file
                 # with output_file.open( 'rb') as f:
                 #     put_file(output_file.name, f.read())

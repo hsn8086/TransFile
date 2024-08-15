@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 
-#  Copyright (C) 2024. Suto-Commune 
+#  Copyright (C) 2024. Suto-Commune
 #  _
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU Affero General Public License as
@@ -23,3 +23,8 @@
 
 @Date       : 2024/8/14 下午9:03
 """
+import tomllib
+from pathlib import Path
+
+with (Path.cwd() / 'config.toml').open("rb") as f:
+    config = tomllib.load(f)

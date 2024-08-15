@@ -23,13 +23,15 @@
 
 @Date       : 2024/8/14 下午2:30
 """
-
+import pywebio.session
 from pywebio.output import put_buttons, put_markdown
 
 from src.webio.page_manager import PageManager
 from .pages.home import HomePage
 from .pages.video import VideoConversion
 from .pages.progress import Progress
+from ..config import config
+
 
 class WebIO:
     def __init__(self):
@@ -45,12 +47,14 @@ class WebIO:
         # `task_func` is PyWebIO task function
         app.add_url_rule('/', 'webio_view', webio_view(self._start),
                          methods=['GET', 'POST', 'OPTIONS'])  # need GET,POST and OPTIONS methods
-
-        webview.create_window("TransFile", app, width=1000, height=800)
-        webview.start()
-        # app.run("localhost", 8080)
+        if config.get("mode",None)=="Client":
+            webview.create_window("TransFile", app, width=1000, height=800)
+            webview.start()
+        elif config.get("mode",None)=="Server":
+            app.run("localhost", 8080)
 
     def _start(self):
+        pywebio.session.set_env(output_animation=False)
         self.page_manager.register(HomePage())
         self.page_manager.register(VideoConversion())
         self.page_manager.register(Progress())

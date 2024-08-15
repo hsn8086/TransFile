@@ -70,7 +70,10 @@ class VideoConvertTask(Task):
             key = parts[0] if len(parts) > 0 else ''
             value = parts[1] if len(parts) > 1 else ''
             if key == 'out_time_ms':
-                self.progress = float(value) / float(total_duration) / 1000000
+                try:
+                    self.progress = float(value) / float(total_duration) / 1000000
+                except ValueError:
+                    ...
         self.status = 'done'
 
     def _stop(self):
