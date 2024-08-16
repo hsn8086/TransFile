@@ -27,6 +27,8 @@ import threading
 import uuid
 from abc import abstractmethod, ABCMeta
 
+import pywebio
+
 
 class Task(metaclass=ABCMeta):
     def __init__(self):
@@ -34,7 +36,7 @@ class Task(metaclass=ABCMeta):
         self.task_name = self.__class__.__name__
         self.status = 'init'
         self.progress = 0
-
+        self.error = None
     @abstractmethod
     def _run(self):
         pass
@@ -67,7 +69,9 @@ class TaskManager:
         if label not in self.groups:
             self.groups[label] = []
         self.groups[label].append(task_id)
-        threading.Thread(target=self._start_task, args=(task.task_id,)).start()
+        t=threading.Thread(target=self._start_task, args=(task.task_id,))
+        t.start()
+        pywebio.session.register_thread(t)
         return task_id
 
     def _start_task(self, tid: str):

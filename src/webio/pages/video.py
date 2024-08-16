@@ -23,16 +23,20 @@
 
 @Date       : 2024/8/14 下午3:52
 """
+import shutil
 import uuid
 from datetime import datetime
 from pathlib import Path
+from tkinter import filedialog
 
 import pywebio
 from pywebio import pin
 from pywebio.output import put_markdown, put_buttons, put_text, use_scope, put_row, put_button, \
-    remove, put_scope, toast
-from pywebio.pin import put_input, put_select, put_file_upload
+    remove, put_scope, toast, popup
+from pywebio.pin import put_input, put_select, put_file_upload, put_textarea
+from pywebio.session import download
 
+from src.config import config
 from src.task.task_manager import tm
 from src.task.tasks.video_convert import VideoConvertTask
 from src.webio.page_templet import PageTemplet
@@ -62,7 +66,7 @@ class VideoConversion(PageTemplet):
         self.__getattribute__(f'{method.replace(" ", "_")}')()
 
     def to_mp4(self):
-        def start(output_format: str, _middlewares: list, files: list):
+        def start(output_format: str, _middlewares: list, files: list, output_path: Path = Path.home()):
             if not files:
                 toast('Please upload a video file first.')
                 return
@@ -95,19 +99,31 @@ class VideoConversion(PageTemplet):
                     elif middleware['name'] == 'Bitrate':
                         options['b:v'] = middleware['input']
                 print(options)
+                output_file_uuid = uuid.uuid4().hex
 
+                def finish(task):
+                    try:
+                        if config.get("mode", None) == "Server":
+                            download(task.output_file, output_file.name)
+                        elif config.get("mode", None) == "Client":
+                            od.output_dir.mkdir(exist_ok=True)
+                            shutil.move(task.output_file, od.output_dir / output_file.name)
+                    except Exception as e:
+                        with popup("Error"):
+                            put_textarea(uuid.uuid4().hex, value=task.error)
+                        return
                 tm.create_task(
-                    VideoConvertTask(input_file.as_posix(), (p / f"{uuid.uuid4().hex}.mp4").as_posix(), **options),
-                    label=pywebio.session.info.user_ip + pywebio.session.info.user_agent.ua_string
+                    VideoConvertTask(input_file.as_posix(), (p / f"{output_file_uuid}.mp4").as_posix(), **options),
+                    label=pywebio.session.info.user_ip + pywebio.session.info.user_agent.ua_string,
+                    callback=finish
                 )
-                # download the video file
-                # with output_file.open( 'rb') as f:
-                #     put_file(output_file.name, f.read())
-                # download(file_name, f.read())
 
         create_task_uuid = uuid.uuid4().hex
         put_scope(create_task_uuid, scope=self.uuid)
         with use_scope(create_task_uuid):
+            # root = tk.Tk()
+            # root.withdraw()
+
             put_markdown('## Create Task')
 
             def _on_button_click(method: str):
@@ -124,6 +140,29 @@ class VideoConversion(PageTemplet):
                             help_text='Upload the video file you want to convert',
                             multiple=True
                             )
+
+            class Temp:
+                def __init__(self):
+                    self.output_dir = Path.cwd() / 'output'
+
+            od = Temp()
+            chose_dir_uuid = uuid.uuid4().hex
+            chose_dir_placeholder_uuid = uuid.uuid4().hex
+            put_scope(chose_dir_placeholder_uuid, scope=create_task_uuid)
+
+            def choose_directory(_output_dir):
+                _output_dir.output_dir = Path(filedialog.askdirectory(initialdir=Path.home()))
+                remove(chose_dir_uuid)
+                put_scope(chose_dir_uuid, scope=chose_dir_placeholder_uuid)
+                with use_scope(chose_dir_uuid):
+                    put_button('Choose directory', onclick=lambda: choose_directory(od))
+                    put_text(od.output_dir)
+
+            if config.get("mode", None) == "Client":
+                put_scope(chose_dir_uuid, scope=chose_dir_placeholder_uuid)
+                with use_scope(chose_dir_uuid):
+                    put_button('Choose directory', onclick=lambda: choose_directory(od))
+                    put_text(od.output_dir)
             out_format_uuid = uuid.uuid4().hex
             put_input(name=out_format_uuid, label='Output format:', placeholder='{name}.mp4')
             put_markdown("""<font size=1>'{name_with_prefix}': the name of the video with the prefix of the video format.

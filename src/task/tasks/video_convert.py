@@ -23,6 +23,7 @@
 
 @Date       : 2024/8/14 下午8:59
 """
+import logging
 import queue
 import threading
 
@@ -52,13 +53,16 @@ class VideoConvertTask(Task):
         sepia_values = [.393, .769, .189, 0, .349, .686, .168, 0, .272, .534, .131]
         stream = (ffmpeg
                   .input(self.input_file)
-                  .colorchannelmixer(*sepia_values)
+                  #.colorchannelmixer(*sepia_values)
                   .output(self.output_file, **self.options)
                   .global_args('-progress', 'pipe:1')
                   .overwrite_output())
+        logging.getLogger("VideoConvertTask").info(f'start with cmd:{stream.get_args()}')
         t = run_async(stream, pipe_stdout=True, pipe_stderr=True)
         q = queue.Queue()
+        errors=queue.Queue()
         threading.Thread(target=reader, args=(t.stdout, q)).start()
+        threading.Thread(target=reader, args=(t.stderr, errors)).start()
         print(total_duration)
 
         for line in iter(q.get, b''):
@@ -74,7 +78,14 @@ class VideoConvertTask(Task):
                     self.progress = float(value) / float(total_duration) / 1000000
                 except ValueError:
                     ...
+        error=""
+        for line in iter(errors.get, b''):
+            if not line:
+                break
+            error+=line.decode()
         self.status = 'done'
+        self.error=error
+        print('done')
 
     def _stop(self):
         pass

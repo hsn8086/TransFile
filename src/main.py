@@ -23,12 +23,13 @@
 
 @Date       : 2024/8/14 下午1:47
 """
+import logging
 import subprocess
 from .webio.main import WebIO
 
 def main():
     wio=WebIO()
-
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
     try:
         subprocess.call(["ffmpeg"])

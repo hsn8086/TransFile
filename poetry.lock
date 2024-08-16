@@ -441,6 +441,19 @@ doc = ["sphinx", "sphinx-tabs"]
 flask = ["flask (>=0.10)"]
 
 [[package]]
+name = "pywebio-battery"
+version = "0.7.0"
+description = "Utilities that help write PyWebIO apps quickly and easily."
+optional = false
+python-versions = ">=3.5.2"
+files = [
+    {file = "pywebio_battery-0.7.0.tar.gz", hash = "sha256:d8316abf4ed1fa1ea6ec99805fb76305a4c9b78623587a2c44629db48e9ed012"},
+]
+
+[package.dependencies]
+pywebio = "*"
+
+[[package]]
 name = "pywebview"
 version = "5.1"
 description = "Build GUI for your Python program with JavaScript, HTML, and CSS"
@@ -585,4 +598,4 @@ watchdog = ["watchdog (>=2.3)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "34b08abeadb41cf444d82d1fe7cae0b9fa76b6f7dd2e219b0efcd1cda2c83a4a"
+content-hash = "e93f71ae92e1b2e7847d817b5021d757818d711c6a4db49d84f76f81c04af3cb"
